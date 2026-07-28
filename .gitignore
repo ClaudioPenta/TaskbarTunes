@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+x64/
+x86/
+
+# Distribution packages — binaries belong in GitHub Releases, not in the repo
+dist/
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Claude Code local settings (absolute paths, machine specific)
+.claude/settings.local.json
+
+# Misc
+*.log
+Thumbs.db
+desktop.ini

@@ -1,0 +1,153 @@
+<Window x:Class="TaskbarTunes.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:TaskbarTunes.Controls"
+        Title="TaskbarTunes"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Width="320" Height="42"
+        MouseEnter="OnMouseEnterWindow"
+        MouseLeave="OnMouseLeaveWindow"
+        MouseLeftButtonDown="OnRootMouseDown"
+        MouseMove="OnRootMouseMove"
+        MouseLeftButtonUp="OnRootMouseUp"
+        ContextMenuOpening="OnContextMenuOpening">
+
+    <Window.Resources>
+        <Style x:Key="MediaButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#30FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bg" Property="Background" Value="#50FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border x:Name="RootBorder" CornerRadius="10" Background="#66151515" ClipToBounds="True">
+        <Border.ContextMenu>
+            <ContextMenu x:Name="WidgetMenu" Opened="OnMenuOpened">
+                <MenuItem Header="Fuente de música">
+                    <MenuItem x:Name="SourceAutoItem" Header="Automática" Click="OnSourceAuto"/>
+                    <MenuItem x:Name="SourceSpotifyItem" Header="Spotify" Click="OnSourceSpotify"/>
+                    <MenuItem x:Name="SourceBrowserItem" Header="Navegador (YouTube…)" Click="OnSourceBrowser"/>
+                </MenuItem>
+                <MenuItem x:Name="HistoryMenu" Header="Historial"/>
+                <MenuItem x:Name="FreeModeItem" Header="Modo overlay libre (flotar sobre apps)" Click="OnToggleFreeMode"/>
+                <Separator/>
+                <MenuItem Header="Ajustes…" Click="OnOpenSettings"/>
+                <MenuItem Header="Salir" Click="OnExit"/>
+            </ContextMenu>
+        </Border.ContextMenu>
+
+        <Grid>
+            <controls:AudioVisualizer x:Name="Visualizer" Margin="8,3"/>
+
+            <Grid x:Name="ContentGrid" Margin="10,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Carátula (cuadrada o vinilo girando, con crossfade) -->
+                <Border x:Name="ArtBorder" Grid.Column="0" Width="30" Height="30"
+                        CornerRadius="6" VerticalAlignment="Center" Margin="0,0,9,0"
+                        Background="#28FFFFFF">
+                    <Border.OpacityMask>
+                        <VisualBrush>
+                            <VisualBrush.Visual>
+                                <Border x:Name="ArtMaskShape" Width="30" Height="30" CornerRadius="6" Background="Black"/>
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </Border.OpacityMask>
+                    <Grid>
+                        <Grid x:Name="ArtSpinner" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <RotateTransform x:Name="ArtRotate"/>
+                            </Grid.RenderTransform>
+                            <Image x:Name="ArtImageA" Stretch="UniformToFill"/>
+                            <Image x:Name="ArtImageB" Stretch="UniformToFill" Opacity="0"/>
+                            <Ellipse x:Name="VinylHole" Width="8" Height="8" Fill="#D9151515"
+                                     Stroke="#66FFFFFF" StrokeThickness="1"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Visibility="Collapsed"/>
+                        </Grid>
+                        <TextBlock x:Name="ArtPlaceholder" Text="&#xE93C;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="14" Foreground="White" Opacity="0.7"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Título y artista -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Grid x:Name="TitleClip" ClipToBounds="True">
+                        <TextBlock x:Name="TitleText" Text="Sin reproducción"
+                                   FontSize="12" FontWeight="SemiBold" Foreground="White"
+                                   TextWrapping="NoWrap" HorizontalAlignment="Left">
+                            <TextBlock.RenderTransform>
+                                <TranslateTransform x:Name="TitleTranslate"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Grid>
+                    <StackPanel x:Name="ArtistRow" Orientation="Horizontal">
+                        <TextBlock x:Name="SourceIcon" Text=""
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="9" Foreground="White" Opacity="0.72"
+                                   Margin="0,1.5,4,0" Visibility="Collapsed"/>
+                        <TextBlock x:Name="ArtistText" Text=""
+                                   FontSize="10.5" Foreground="White" Opacity="0.72"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Controles (aparecen al pasar el ratón) -->
+                <StackPanel x:Name="ControlsPanel" Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center" Opacity="0" Margin="6,0,0,0">
+                    <Button x:Name="PrevButton" Style="{StaticResource MediaButton}"
+                            Content="&#xE892;" Click="OnPrev" ToolTip="Anterior"/>
+                    <Button x:Name="PlayButton" Style="{StaticResource MediaButton}"
+                            Content="&#xE768;" FontSize="13" Click="OnPlayPause" ToolTip="Reproducir/Pausar"/>
+                    <Button x:Name="NextButton" Style="{StaticResource MediaButton}"
+                            Content="&#xE893;" Click="OnNext" ToolTip="Siguiente"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Progreso de la pista (clic para saltar) -->
+            <Border x:Name="ProgressHit" Height="10" VerticalAlignment="Bottom"
+                    Margin="10,0" Background="Transparent" Cursor="Hand"
+                    MouseLeftButtonDown="OnProgressMouseDown">
+                <Border x:Name="ProgressTrack" Height="2.5" VerticalAlignment="Bottom"
+                        Margin="0,0,0,1.5" Background="#26FFFFFF" CornerRadius="1.25"
+                        Visibility="Collapsed">
+                    <Border x:Name="ProgressFill" HorizontalAlignment="Left" Width="0"
+                            Background="#FF1DB954" CornerRadius="1.25"/>
+                </Border>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
